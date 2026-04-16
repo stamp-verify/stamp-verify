@@ -1,0 +1,55 @@
+name: CI
+
+# Sanity check on every push/PR: CLI typecheck + GUI typecheck + Linux
+# Rust build. Doesn't produce release artifacts — that's release.yml.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run build
+
+  gui:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libxdo-dev
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "gui/src-tauri -> target"
+
+      - name: Install frontend dependencies
+        working-directory: gui
+        run: npm ci
+
+      - name: Typecheck + build frontend
+        working-directory: gui
+        run: npm run build
+
+      - name: Cargo check
+        working-directory: gui/src-tauri
+        run: cargo check --locked
