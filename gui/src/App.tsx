@@ -1,6 +1,29 @@
-import { useState, useRef, type DragEvent, type ChangeEvent } from "react";
+import { useState, useRef, type DragEvent, type ChangeEvent, type MouseEvent } from "react";
 import type { Hex } from "viem";
 import { hashBytes, verifyHash, type VerifyResult } from "@core/verify";
+
+const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+
+async function openExternal(url: string) {
+  if (isTauri) {
+    const { openUrl } = await import("@tauri-apps/plugin-opener");
+    await openUrl(url);
+  } else {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+}
+
+function ExtLink({ href, children }: { href: string; children: React.ReactNode }) {
+  const onClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    void openExternal(href);
+  };
+  return (
+    <a href={href} onClick={onClick} target="_blank" rel="noreferrer">
+      {children}
+    </a>
+  );
+}
 
 type Status =
   | { kind: "idle" }
@@ -161,13 +184,9 @@ export function App() {
               <dd>{status.result.merkleRoot}</dd>
               <dt>Contract</dt>
               <dd>
-                <a
-                  href={`${POLYGONSCAN}/address/${status.result.contract}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <ExtLink href={`${POLYGONSCAN}/address/${status.result.contract}`}>
                   {status.result.contract}
-                </a>
+                </ExtLink>
               </dd>
               <dt>Chain</dt>
               <dd>{status.result.chain}</dd>
@@ -178,9 +197,9 @@ export function App() {
 
       <footer className="foot">
         <span>MIT licensed —</span>
-        <a href="https://github.com/stamp-verify/stamp-verify" target="_blank" rel="noreferrer">source</a>
+        <ExtLink href="https://github.com/stamp-verify/stamp-verify">source</ExtLink>
         <span>—</span>
-        <a href="https://bastamp.com" target="_blank" rel="noreferrer">bastamp.com</a>
+        <ExtLink href="https://bastamp.com">bastamp.com</ExtLink>
       </footer>
     </div>
   );

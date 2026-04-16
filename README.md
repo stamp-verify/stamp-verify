@@ -83,6 +83,39 @@ The Stamper contract is verified on Polygonscan. Anyone can inspect the source c
 | **Chain** | Polygon (PoS) |
 | **Verified source** | [Polygonscan](https://polygonscan.com/address/0x50ddee9a1afbe1a14f1cf01b379535f897b3ca3d#code) |
 
+## Desktop app (GUI)
+
+A Tauri-based desktop binary lives in [`gui/`](./gui). Same verification
+logic as the CLI (via `src/core/verify.ts`), wrapped in a drag-a-file UI.
+
+### Run in browser (dev)
+
+```bash
+cd gui
+npm install
+npm run dev      # opens http://localhost:1420
+```
+
+### Build the native binary
+
+Requires Rust and, on Linux, Tauri's system dependencies:
+
+```bash
+# Ubuntu/Debian
+sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file \
+  libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev pkg-config
+
+# macOS: Xcode Command Line Tools (xcode-select --install)
+# Windows: Microsoft Visual Studio C++ Build Tools + WebView2 (pre-installed on Win 11)
+```
+
+Then:
+
+```bash
+cd gui
+npm run tauri:build   # produces .dmg / .msi / .AppImage under gui/src-tauri/target/release/bundle/
+```
+
 ## License
 
 MIT — use it however you want.
