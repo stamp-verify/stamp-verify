@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { existsSync } from "node:fs";
-import { hashFile, verifyTimestamp, verifyHash } from "./verify.js";
+import { hashFile, verifyTimestamp, verifyHash } from "./node.js";
 import type { Hex } from "viem";
 
 const HELP = `
