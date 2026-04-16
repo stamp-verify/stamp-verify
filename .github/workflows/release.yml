@@ -1,34 +1,48 @@
 name: Release
 
 # Fires when a tag like v0.1.0 is pushed. Cross-compiles the Tauri app on
-# the three main desktop platforms and uploads the installers to a draft
-# GitHub Release — which the maintainer can review and publish.
+# the main desktop platforms. The Windows .msi is routed through SignPath
+# Foundation for code signing when the SIGNPATH_API_TOKEN secret is set;
+# otherwise it ships unsigned (SmartScreen click-through).
 on:
   push:
     tags:
       - "v*.*.*"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
+    env:
+      # Exposing the secret as env lets step `if:` conditions test whether
+      # SignPath is configured without leaking the token in logs.
+      SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+
     strategy:
       fail-fast: false
       matrix:
         include:
           - platform: macos-latest
-            args: "--target aarch64-apple-darwin"
-            label: macos-arm64
+            rust_target: aarch64-apple-darwin
+            tauri_args: "--target aarch64-apple-darwin"
+            artifact_path: "gui/src-tauri/target/aarch64-apple-darwin/release/bundle"
           - platform: macos-13
-            args: "--target x86_64-apple-darwin"
-            label: macos-x64
+            rust_target: x86_64-apple-darwin
+            tauri_args: "--target x86_64-apple-darwin"
+            artifact_path: "gui/src-tauri/target/x86_64-apple-darwin/release/bundle"
           - platform: ubuntu-22.04
-            args: ""
-            label: linux-x64
+            rust_target: x86_64-unknown-linux-gnu
+            tauri_args: ""
+            artifact_path: "gui/src-tauri/target/release/bundle"
           - platform: windows-latest
-            args: ""
-            label: windows-x64
+            rust_target: x86_64-pc-windows-msvc
+            tauri_args: ""
+            artifact_path: "gui/src-tauri/target/release/bundle"
 
     runs-on: ${{ matrix.platform }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -49,10 +63,9 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || matrix.platform == 'macos-13' && 'x86_64-apple-darwin' || '' }}
+          targets: ${{ matrix.rust_target }}
 
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
+      - uses: swatinem/rust-cache@v2
         with:
           workspaces: "gui/src-tauri -> target"
 
@@ -60,20 +73,71 @@ jobs:
         working-directory: gui
         run: npm ci
 
-      - uses: tauri-apps/tauri-action@v0
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: gui
-          tagName: ${{ github.ref_name }}
-          releaseName: "BA | Stamp Verify ${{ github.ref_name }}"
-          releaseBody: |
+          args: ${{ matrix.tauri_args }}
+
+      # ─── Windows only: optional SignPath Foundation signing ───
+      - name: Upload unsigned .msi as GH artifact
+        if: matrix.platform == 'windows-latest' && env.SIGNPATH_API_TOKEN != ''
+        id: upload_msi
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-msi-unsigned
+          path: ${{ matrix.artifact_path }}/msi/*.msi
+          if-no-files-found: error
+
+      - name: Sign Windows .msi via SignPath
+        if: matrix.platform == 'windows-latest' && env.SIGNPATH_API_TOKEN != ''
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ secrets.SIGNPATH_SIGNING_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.upload_msi.outputs.artifact-id }}
+          artifact-configuration-slug: msi-installer
+          wait-for-completion: true
+          output-artifact-directory: signed-msi
+
+      # ─── Publish release (all platforms) ───
+      - name: Collect release assets
+        shell: bash
+        run: |
+          mkdir -p release-assets
+          # Prefer the SignPath-signed .msi when present.
+          if [ -d signed-msi ] && ls signed-msi/*.msi >/dev/null 2>&1; then
+            cp signed-msi/*.msi release-assets/
+          else
+            find "${{ matrix.artifact_path }}" -name "*.msi" -exec cp {} release-assets/ \; 2>/dev/null || true
+          fi
+          # Non-Windows artifacts and unsigned .exe fallbacks.
+          find "${{ matrix.artifact_path }}" -type f \( \
+            -name "*.dmg" -o \
+            -name "*.AppImage" -o \
+            -name "*.deb" -o \
+            -name "*.rpm" -o \
+            -name "*.exe" \
+          \) -exec cp {} release-assets/ \; 2>/dev/null || true
+          ls -la release-assets/
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "BA | Stamp Verify ${{ github.ref_name }}"
+          draft: true
+          prerelease: false
+          files: release-assets/*
+          body: |
             Independent desktop verifier for BA | Stamp blockchain timestamps.
 
-            Unsigned binaries — macOS: right-click → Open the first time.
-            Windows: SmartScreen → "More info" → "Run anyway".
+            macOS: right-click → Open the first time (unsigned until Apple Developer enrollment).
+            Windows: signed via SignPath Foundation if the workflow was configured; otherwise SmartScreen click-through.
+            Linux: no signing required.
 
             Source: https://github.com/stamp-verify/stamp-verify
-          releaseDraft: true
-          prerelease: false
-          args: ${{ matrix.args }}
