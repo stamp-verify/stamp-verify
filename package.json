@@ -1,0 +1,23 @@
+{
+  "name": "stamp-verify",
+  "version": "0.1.0",
+  "description": "Open-source CLI to verify BA | Stamp blockchain timestamps independently",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "stamp-verify": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "verify": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "merkletreejs": "^0.4.0",
+    "viem": "^2.23.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  }
+}
