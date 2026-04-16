@@ -1,7 +1,7 @@
 # Code signing
 
 The release workflow supports optional code signing via
-[SignPath Foundation](https://signpath.io/foundation) — a free code-signing
+[SignPath Foundation](https://signpath.org/) — a free code-signing
 service for legitimate open-source projects. Until applied for and approved,
 Windows installers ship unsigned; Linux doesn't need signing; macOS requires
 an Apple Developer account (see below).
@@ -10,8 +10,12 @@ an Apple Developer account (see below).
 
 ### 1. Apply
 
-Go to <https://signpath.io/foundation> and submit a new project. The form
-asks for a few details — pre-filled values for this repo:
+Go to <https://signpath.org/apply> and submit the form. Eligibility
+([terms](https://signpath.org/terms.html)): OSI-approved OSS license
+with no commercial dual-licensing, actively maintained, already released
+in the form to be signed.
+
+Pre-filled values for this repo:
 
 | Field | Value |
 | --- | --- |
