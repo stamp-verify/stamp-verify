@@ -4,12 +4,42 @@
   "description": "Open-source CLI to verify BA | Stamp blockchain timestamps independently",
   "license": "MIT",
   "type": "module",
+  "author": "BA | BlockchainAnalysis",
+  "homepage": "https://bastamp.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stamp-verify/stamp-verify.git"
+  },
+  "bugs": {
+    "url": "https://github.com/stamp-verify/stamp-verify/issues"
+  },
+  "keywords": [
+    "blockchain",
+    "timestamp",
+    "verification",
+    "merkle-proof",
+    "polygon",
+    "bitcoin",
+    "opentimestamps",
+    "eidas",
+    "sha256",
+    "cli"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "bin": {
     "stamp-verify": "./dist/cli.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
-    "verify": "tsx src/cli.ts"
+    "verify": "tsx src/cli.ts",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "viem": "^2.23.0"
