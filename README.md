@@ -90,10 +90,11 @@ logic as the CLI (via `src/core/verify.ts`), wrapped in a drag-a-file UI.
 
 ### Run in browser (dev)
 
+From the repo root:
+
 ```bash
-cd gui
-npm install
-npm run dev      # opens http://localhost:1420
+npm install       # installs CLI + GUI deps (npm workspaces)
+npm run dev:gui   # opens http://localhost:1420
 ```
 
 ### Build the native binary
@@ -109,11 +110,10 @@ sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file \
 # Windows: Microsoft Visual Studio C++ Build Tools + WebView2 (pre-installed on Win 11)
 ```
 
-Then:
+Then, from the repo root:
 
 ```bash
-cd gui
-npm run tauri:build   # produces .dmg / .msi / .AppImage under gui/src-tauri/target/release/bundle/
+npm run tauri:build --workspace gui   # produces .dmg / .msi / .AppImage under gui/src-tauri/target/release/bundle/
 ```
 
 ## License

@@ -36,9 +36,14 @@
     "README.md",
     "LICENSE"
   ],
+  "workspaces": [
+    "gui"
+  ],
   "scripts": {
     "build": "tsc",
     "verify": "tsx src/cli.ts",
+    "dev:gui": "npm run dev --workspace gui",
+    "build:gui": "npm run build --workspace gui",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {

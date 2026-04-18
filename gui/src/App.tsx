@@ -47,16 +47,14 @@ export function App() {
     const trimmed = text.trim();
     if (!trimmed) throw new Error("Paste the Merkle proof JSON");
     const raw: unknown = JSON.parse(trimmed);
-    const arr =
-      Array.isArray(raw)
-        ? raw
-        : typeof raw === "object" && raw !== null && Array.isArray((raw as Record<string, unknown>).proof)
-          ? (raw as Record<string, unknown>).proof
-          : typeof raw === "object" && raw !== null && Array.isArray((raw as Record<string, unknown>).merkleProof)
-            ? (raw as Record<string, unknown>).merkleProof
-            : null;
-    if (!Array.isArray(arr)) throw new Error("Expected an array of hex strings");
-    return arr as Hex[];
+    if (Array.isArray(raw)) return raw as Hex[];
+    if (typeof raw === "object" && raw !== null) {
+      const obj = raw as Record<string, unknown>;
+      for (const key of ["siblings", "proof", "merkleProof"]) {
+        if (Array.isArray(obj[key])) return obj[key] as Hex[];
+      }
+    }
+    throw new Error("Expected an array of hex strings");
   }
 
   async function loadFile(file: File) {
