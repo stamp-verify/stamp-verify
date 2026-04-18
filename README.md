@@ -88,6 +88,17 @@ The Stamper contract is verified on Polygonscan. Anyone can inspect the source c
 A Tauri-based desktop binary lives in [`gui/`](./gui). Same verification
 logic as the CLI (via `src/core/verify.ts`), wrapped in a drag-a-file UI.
 
+### Download
+
+Pre-built binaries for each platform are published on the [releases page](https://github.com/stamp-verify/stamp-verify/releases/latest):
+
+- **macOS (Apple Silicon)** — `.dmg`
+- **Windows** — `.msi` installer or `.exe` setup
+- **Linux** — `.AppImage`, `.deb`, or `.rpm`
+
+> macOS: right-click → Open the first time (unsigned until Apple Developer enrollment).
+> Windows: SmartScreen click-through unless signed via SignPath Foundation.
+
 ### Run in browser (dev)
 
 From the repo root:
